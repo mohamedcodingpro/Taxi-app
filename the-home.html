@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaxiPata</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <!-- Load Google Maps API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places,geometry&callback=initMap" async defer></script>
+
+</head>
+<body>
+    <header>
+        <div class="wallet-balance" id="wallet-balance">
+            R<span id="balance">0.00</span>
+            <button id="add-funds">+</button>
+            
+        </div>
+        <!-- Add this inside your <header> section -->
+<div class="home-button-container">
+    <a href="home.html" class="home-button">
+      <i class="fas fa-home"></i> Home
+    </a>
+  </div>
+        <div class="logo-container">
+            <img src="images/logo.png" alt="TaxiPata Logo" class="logo">
+            <div class="title-container">
+                <h1 data-translate="app_title">TaxiPata</h1>
+                <p data-translate="app_subtitle">Find minibus taxi routes, fares & travel times</p>
+            </div>
+        </div>
+        <div class="header-controls">
+            <div class="language-selector">
+                <select id="language-select">
+                    <option value="en">English</option>
+                    <option value="zu">Zulu</option>
+                    <option value="xh">Xhosa</option>
+                </select>
+            </div>
+            <button id="dark-mode-toggle">🌙 Dark Mode</button>
+        </div>
+    </header>
+
+    <main>
+        <!-- Search Section -->
+        <div class="search-container">
+            <input type="text" id="from" placeholder="From (e.g., Johannesburg)" autocomplete="off" data-translate="from_placeholder">
+            <input type="text" id="to" placeholder="To (e.g., Pretoria)" autocomplete="off" data-translate="to_placeholder">
+            <button id="search-btn" data-translate="search_button">Find Route</button>
+        </div>
+
+        <!-- Dynamic Pricing Info -->
+        <div class="pricing-info" id="pricing-info">
+            <span data-translate="base_fare">Base fare</span>: R<span id="base-fare">0.00</span>
+            <span class="dynamic-pricing" id="dynamic-pricing-badge">
+                <span data-translate="dynamic_pricing">Dynamic pricing</span>: +R<span id="price-adjustment">0.00</span>
+            </span>
+        </div>
+
+        <!-- Results Section -->
+        <div class="results">
+            <div id="route-info">
+                <h3><span data-translate="route_label">Route</span>: <span id="route">-</span></h3>
+                <p><span data-translate="fare_label">Fare</span>: <span id="fare">R0.00</span> <small>(<span data-translate="estimated">estimated</span>)</small></p>
+                <p><span data-translate="time_label">Travel Time</span>: <span id="time">0 min</span></p>
+                
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button id="book-btn" data-translate="book_button">Book Taxi</button>
+                    <button id="share-btn" data-translate="share_button">Share Trip</button>
+                </div>
+
+                <!-- User Reviews -->
+                <div class="reviews">
+                    <h4 data-translate="reviews_header">Reviews</h4>
+                    <div id="reviews-list"></div>
+                    <textarea id="review-input" placeholder="Share your experience..." data-translate="review_placeholder"></textarea>
+                    <div class="rating-stars">
+                        <span class="star" data-rating="1">☆</span>
+                        <span class="star" data-rating="2">☆</span>
+                        <span class="star" data-rating="3">☆</span>
+                        <span class="star" data-rating="4">☆</span>
+                        <span class="star" data-rating="5">☆</span>
+                    </div>
+                    <button id="submit-review" data-translate="submit_review">Submit Review</button>
+                </div>
+            </div>
+            
+            <!-- Map & Nearby Taxi Ranks -->
+            <div id="map-container">
+                <div id="map"></div>
+                <div id="nearby-ranks">
+                    <h4 data-translate="nearby_ranks">Nearby Taxi Ranks</h4>
+                    <ul id="ranks-list"></ul>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- SOS Button -->
+    <button id="sos-button" data-translate="sos_button">SOS</button>
+
+    <!-- Offline Notification (hidden by default) -->
+    <div id="offline-notification" class="offline-notification" style="display: none;">
+        <span data-translate="offline_message">You are offline - showing cached routes</span>
+    </div>
+    <style>
+        /* Add this to your CSS */
+.home-button-container {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 100;
+}
+
+.home-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background-color: #FF9900;
+  color: white;
+  text-decoration: none;
+  border-radius: 50px;
+  font-weight: 600;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.home-button:hover {
+  background-color: #E67E22;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(230, 126, 34, 0.3);
+}
+
+.home-button:active {
+  transform: translateY(0);
+}
+
+/* Font Awesome icon styling */
+.home-button i {
+  font-size: 1rem;
+}
+
+/* Mobile responsive adjustment */
+@media (max-width: 768px) {
+  .home-button-container {
+    top: 15px;
+    right: 15px;
+  }
+  .home-button {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+  }
+}
+        /* Payment-specific styles */
+        .payment-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+        
+        .payment-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .payment-header h2 {
+            color: #333;
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .payment-methods {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .payment-method {
+            border: 2px solid #eee;
+            border-radius: 10px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .payment-method.selected {
+            border-color: #FF9900;
+            background-color: rgba(255, 153, 0, 0.05);
+        }
+        
+        .payment-method input {
+            position: absolute;
+            opacity: 0;
+        }
+        
+        .payment-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: #555;
+        }
+        
+        .payment-method.selected .payment-icon {
+            color: #FF9900;
+        }
+        
+        .payment-details {
+            margin-top: 2rem;
+            display: none;
+        }
+        
+        .payment-details.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        
+        .card-elements {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .pay-now-btn {
+            background: linear-gradient(135deg, #FF9900, #E67E22);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s;
+            margin-top: 1rem;
+        }
+        
+        .pay-now-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(230, 126, 34, 0.3);
+        }
+        
+        .wallet-balance-display {
+            background: #f5f5f5;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .wallet-balance-display h3 {
+            margin-bottom: 0.5rem;
+        }
+        
+        .wallet-amount {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #FF9900;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .payment-container {
+                padding: 1.5rem;
+                margin: 1rem;
+            }
+            
+            .card-elements {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    
+</head>
+<body>
+    
+
+    <main>
+        <div class="payment-container">
+            <div class="payment-header">
+                <h2>Complete Your Payment</h2>
+                <p>Choose your preferred payment method</p>
+            </div>
+            
+            <div class="wallet-balance-display">
+                <h3>Your Wallet Balance</h3>
+                <div class="wallet-amount">R<span id="wallet-balance-display">50.00</span></div>
+                <small>Fare: <span id="payment-fare">R25.00</span></small>
+            </div>
+            
+            <div class="payment-methods">
+                <div class="payment-method selected" id="wallet-method">
+                    <input type="radio" name="payment-method" value="wallet" checked>
+                    <div class="payment-icon">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <h3>TaxiPata Wallet</h3>
+                    <p>Pay using your wallet balance</p>
+                </div>
+                
+                <div class="payment-method" id="card-method">
+                    <input type="radio" name="payment-method" value="card">
+                    <div class="payment-icon">
+                        <i class="far fa-credit-card"></i>
+                    </div>
+                    <h3>Credit/Debit Card</h3>
+                    <p>Visa, Mastercard, Amex</p>
+                </div>
+                
+                <div class="payment-method" id="mobile-money-method">
+                    <input type="radio" name="payment-method" value="mobile-money">
+                    <div class="payment-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h3>Mobile Money</h3>
+                    <p>Shop2shop, M-Pesa, Vodacom MPesa, MTN Mobile Money</p>
+                </div>
+            </div>
+            
+            <!-- Wallet Payment Details -->
+            <div class="payment-details active" id="wallet-details">
+                <div class="payment-summary">
+                    <p>You'll pay <strong>R25.00</strong> from your wallet balance</p>
+                    <p>Remaining balance: <strong>R25.00</strong></p>
+                </div>
+                <button class="pay-now-btn" id="pay-with-wallet">
+                    Confirm Payment
+                </button>
+            </div>
+            
+            <!-- Card Payment Details -->
+            <div class="payment-details" id="card-details">
+                <div class="form-group">
+                    <label for="card-number">Card Number</label>
+                    <input type="text" id="card-number" class="form-control" placeholder="1234 5678 9012 3456">
+                </div>
+                
+                <div class="form-group">
+                    <label for="card-name">Name on Card</label>
+                    <input type="text" id="card-name" class="form-control" placeholder="Your Name">
+                </div>
+                
+                <div class="card-elements">
+                    <div class="form-group">
+                        <label for="card-expiry">Expiry Date</label>
+                        <input type="text" id="card-expiry" class="form-control" placeholder="MM/YY">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="card-cvv">CVV</label>
+                        <input type="text" id="card-cvv" class="form-control" placeholder="123">
+                    </div>
+                </div>
+                
+                <button class="pay-now-btn" id="pay-with-card">
+                    Pay R25.00 Now
+                </button>
+            </div>
+            
+            <!-- Mobile Money Payment Details -->
+            <div class="payment-details" id="mobile-money-details">
+                <div class="form-group">
+                    <label for="mobile-provider">Mobile Provider</label>
+                    <select id="mobile-provider" class="form-control">
+                        <option value="">Select Provider</option>
+                        <option value="mpesa">M-Pesa</option>
+                        <option value="vodacom">Vodacom MPesa</option>
+                        <option value="mtn">MTN Mobile Money</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="mobile-number">Mobile Number</label>
+                    <input type="tel" id="mobile-number" class="form-control" placeholder="07XXXXXXXX">
+                </div>
+                
+                <div class="payment-instructions">
+                    <p>You'll receive a payment request on your mobile device to complete the transaction.</p>
+                </div>
+                
+                <button class="pay-now-btn" id="pay-with-mobile">
+                    Request Payment
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Payment method selection
+        document.addEventListener('DOMContentLoaded', function() {
+            const paymentMethods = document.querySelectorAll('.payment-method');
+            const paymentDetails = document.querySelectorAll('.payment-details');
+            
+            paymentMethods.forEach(method => {
+                method.addEventListener('click', function() {
+                    // Remove selected class from all methods
+                    paymentMethods.forEach(m => m.classList.remove('selected'));
+                    
+                    // Add selected class to clicked method
+                    this.classList.add('selected');
+                    
+                    // Hide all payment details
+                    paymentDetails.forEach(detail => detail.classList.remove('active'));
+                    
+                    // Show corresponding payment details
+                    const methodId = this.id;
+                    document.getElementById(`${methodId}-details`).classList.add('active');
+                });
+            });
+            
+            // Payment button functionality
+            document.getElementById('pay-with-wallet').addEventListener('click', function() {
+                alert('Payment successful! R25.00 has been deducted from your wallet.');
+                // In a real app, you would process the payment here
+            });
+            
+            document.getElementById('pay-with-card').addEventListener('click', function() {
+                alert('Card payment processed successfully!');
+                // In a real app, you would process the card payment here
+            });
+            
+            document.getElementById('pay-with-mobile').addEventListener('click', function() {
+                alert('Payment request sent to your mobile device. Please complete the payment on your phone.');
+                // In a real app, you would initiate mobile payment here
+            });
+            
+            // Load the fare from URL parameters or previous page
+            const urlParams = new URLSearchParams(window.location.search);
+            const fare = urlParams.get('fare') || '25.00';
+            document.getElementById('payment-fare').textContent = `R${fare}`;
+            
+            // Calculate remaining balance
+            const walletBalance = 50.00; // This would come from your app state
+            const remainingBalance = walletBalance - parseFloat(fare);
+            document.querySelector('#wallet-details .payment-summary strong:last-child').textContent = `R${remainingBalance.toFixed(2)}`;
+        });
+    </script>
+    
+    <!-- Font Awesome for icons -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -3,475 +3,698 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TaxiPata</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.json">
-    <!-- Load Google Maps API -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places,geometry&callback=initMap" async defer></script>
-
-</head>
-<body>
-    <header>
-        <div class="wallet-balance" id="wallet-balance">
-            R<span id="balance">0.00</span>
-            <button id="add-funds">+</button>
-            
-        </div>
-        <!-- Add this inside your <header> section -->
-<div class="home-button-container">
-    <a href="home.html" class="home-button">
-      <i class="fas fa-home"></i> Home
-    </a>
-  </div>
-        <div class="logo-container">
-            <img src="images/logo.png" alt="TaxiPata Logo" class="logo">
-            <div class="title-container">
-                <h1 data-translate="app_title">TaxiPata</h1>
-                <p data-translate="app_subtitle">Find minibus taxi routes, fares & travel times</p>
-            </div>
-        </div>
-        <div class="header-controls">
-            <div class="language-selector">
-                <select id="language-select">
-                    <option value="en">English</option>
-                    <option value="zu">Zulu</option>
-                    <option value="xh">Xhosa</option>
-                </select>
-            </div>
-            <button id="dark-mode-toggle">🌙 Dark Mode</button>
-        </div>
-    </header>
-
-    <main>
-        <!-- Search Section -->
-        <div class="search-container">
-            <input type="text" id="from" placeholder="From (e.g., Johannesburg)" autocomplete="off" data-translate="from_placeholder">
-            <input type="text" id="to" placeholder="To (e.g., Pretoria)" autocomplete="off" data-translate="to_placeholder">
-            <button id="search-btn" data-translate="search_button">Find Route</button>
-        </div>
-
-        <!-- Dynamic Pricing Info -->
-        <div class="pricing-info" id="pricing-info">
-            <span data-translate="base_fare">Base fare</span>: R<span id="base-fare">0.00</span>
-            <span class="dynamic-pricing" id="dynamic-pricing-badge">
-                <span data-translate="dynamic_pricing">Dynamic pricing</span>: +R<span id="price-adjustment">0.00</span>
-            </span>
-        </div>
-
-        <!-- Results Section -->
-        <div class="results">
-            <div id="route-info">
-                <h3><span data-translate="route_label">Route</span>: <span id="route">-</span></h3>
-                <p><span data-translate="fare_label">Fare</span>: <span id="fare">R0.00</span> <small>(<span data-translate="estimated">estimated</span>)</small></p>
-                <p><span data-translate="time_label">Travel Time</span>: <span id="time">0 min</span></p>
-                
-                <!-- Action Buttons -->
-                <div class="action-buttons">
-                    <button id="book-btn" data-translate="book_button">Book Taxi</button>
-                    <button id="share-btn" data-translate="share_button">Share Trip</button>
-                </div>
-
-                <!-- User Reviews -->
-                <div class="reviews">
-                    <h4 data-translate="reviews_header">Reviews</h4>
-                    <div id="reviews-list"></div>
-                    <textarea id="review-input" placeholder="Share your experience..." data-translate="review_placeholder"></textarea>
-                    <div class="rating-stars">
-                        <span class="star" data-rating="1">☆</span>
-                        <span class="star" data-rating="2">☆</span>
-                        <span class="star" data-rating="3">☆</span>
-                        <span class="star" data-rating="4">☆</span>
-                        <span class="star" data-rating="5">☆</span>
-                    </div>
-                    <button id="submit-review" data-translate="submit_review">Submit Review</button>
-                </div>
-            </div>
-            
-            <!-- Map & Nearby Taxi Ranks -->
-            <div id="map-container">
-                <div id="map"></div>
-                <div id="nearby-ranks">
-                    <h4 data-translate="nearby_ranks">Nearby Taxi Ranks</h4>
-                    <ul id="ranks-list"></ul>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <!-- SOS Button -->
-    <button id="sos-button" data-translate="sos_button">SOS</button>
-
-    <!-- Offline Notification (hidden by default) -->
-    <div id="offline-notification" class="offline-notification" style="display: none;">
-        <span data-translate="offline_message">You are offline - showing cached routes</span>
-    </div>
+    <title>TaxiPata - Smart Minibus Taxi Routes in South Africa</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Add this to your CSS */
-.home-button-container {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  z-index: 100;
-}
-
-.home-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px 20px;
-  background-color: #FF9900;
-  color: white;
-  text-decoration: none;
-  border-radius: 50px;
-  font-weight: 600;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  transition: all 0.3s ease;
-  border: none;
-  cursor: pointer;
-}
-
-.home-button:hover {
-  background-color: #E67E22;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(230, 126, 34, 0.3);
-}
-
-.home-button:active {
-  transform: translateY(0);
-}
-
-/* Font Awesome icon styling */
-.home-button i {
-  font-size: 1rem;
-}
-
-/* Mobile responsive adjustment */
-@media (max-width: 768px) {
-  .home-button-container {
-    top: 15px;
-    right: 15px;
-  }
-  .home-button {
-    padding: 8px 16px;
-    font-size: 0.9rem;
-  }
-}
-        /* Payment-specific styles */
-        .payment-container {
-            max-width: 800px;
-            margin: 2rem auto;
-            padding: 2rem;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        :root {
+            --primary: #FF9900;
+            --secondary: #E67E22;
+            --dark: #1A1A1A;
+            --light: #F5F5F5;
+            --text: #333333;
+            --success: #27AE60;
         }
         
-        .payment-header {
-            text-align: center;
-            margin-bottom: 2rem;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Ubuntu, sans-serif;
         }
         
-        .payment-header h2 {
-            color: #333;
-            font-size: 1.8rem;
-            margin-bottom: 0.5rem;
+        body {
+            background-color: #FFFFFF;
+            color: var(--text);
+            line-height: 1.6;
         }
         
-        .payment-methods {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
+        /* Header */
+        header {
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: fixed;
+            width: 100%;
+            z-index: 100;
         }
         
-        .payment-method {
-            border: 2px solid #eee;
-            border-radius: 10px;
-            padding: 1.5rem;
-            cursor: pointer;
-            transition: all 0.3s;
-            position: relative;
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 5%;
+            max-width: 1400px;
+            margin: 0 auto;
         }
         
-        .payment-method.selected {
-            border-color: #FF9900;
-            background-color: rgba(255, 153, 0, 0.05);
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
         
-        .payment-method input {
-            position: absolute;
-            opacity: 0;
+        .logo img {
+            height: 40px;
         }
         
-        .payment-icon {
-            font-size: 2rem;
-            margin-bottom: 1rem;
-            color: #555;
+        .logo-text {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--primary);
         }
         
-        .payment-method.selected .payment-icon {
-            color: #FF9900;
+        .nav-links {
+            display: flex;
+            gap: 2rem;
         }
         
-        .payment-details {
-            margin-top: 2rem;
-            display: none;
-        }
-        
-        .payment-details.active {
-            display: block;
-            animation: fadeIn 0.5s;
-        }
-        
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text);
             font-weight: 500;
+            transition: color 0.3s;
         }
         
-        .form-control {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 1rem;
+        .nav-links a:hover {
+            color: var(--primary);
         }
         
-        .card-elements {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-        }
-        
-        .pay-now-btn {
-            background: linear-gradient(135deg, #FF9900, #E67E22);
+        .cta-button {
+            background-color: var(--primary);
             color: white;
-            border: none;
-            padding: 15px 30px;
+            padding: 0.7rem 1.5rem;
             border-radius: 50px;
-            font-size: 1.1rem;
             font-weight: 600;
-            cursor: pointer;
-            width: 100%;
             transition: all 0.3s;
-            margin-top: 1rem;
+            border: none;
+            cursor: pointer;
         }
         
-        .pay-now-btn:hover {
+        .cta-button:hover {
+            background-color: var(--secondary);
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(230, 126, 34, 0.3);
         }
         
-        .wallet-balance-display {
-            background: #f5f5f5;
-            padding: 1.5rem;
-            border-radius: 10px;
+        /* Hero Section */
+        .hero {
+            padding: 10rem 5% 5rem;
+            display: flex;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, rgba(255,153,0,0.1) 0%, rgba(255,255,255,1) 100%);
+        }
+        
+        .hero-content {
+            flex: 1;
+            max-width: 600px;
+        }
+        
+        .hero h1 {
+            font-size: 3.2rem;
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+            color: var(--dark);
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
             margin-bottom: 2rem;
+            color: #555;
+        }
+        
+        .app-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .app-button {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            background-color: var(--dark);
+            color: white;
+            text-decoration: none;
+            transition: transform 0.3s;
+        }
+        
+        .app-button:hover {
+            transform: translateY(-3px);
+        }
+        
+        .app-button i {
+            font-size: 1.5rem;
+        }
+        
+        .app-button span {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .app-button small {
+            font-size: 0.7rem;
+            opacity: 0.8;
+        }
+        
+        .hero-image {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .phone-mockup {
+            width: 300px;
+            border-radius: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            z-index: 2;
+        }
+        
+        .map-background {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, var(--primary) 0%, rgba(255,153,0,0) 70%);
+            opacity: 0.2;
+            border-radius: 50%;
+            z-index: 1;
+        }
+        
+        /* Features Section */
+        .features {
+            padding: 6rem 5%;
+            background-color: white;
+        }
+        
+        .section-title {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+        
+        .section-title h2 {
+            font-size: 2.5rem;
+            color: var(--dark);
+            margin-bottom: 1rem;
+        }
+        
+        .section-title p {
+            color: #666;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .feature-card {
+            background-color: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        }
+        
+        .feature-icon {
+            background-color: rgba(255,153,0,0.1);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .feature-icon i {
+            font-size: 1.8rem;
+            color: var(--primary);
+        }
+        
+        .feature-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+        
+        /* How It Works */
+        .how-it-works {
+            padding: 6rem 5%;
+            background-color: #F9F9F9;
+        }
+        
+        .steps {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            max-width: 1000px;
+            margin: 0 auto;
+            flex-wrap: wrap;
+        }
+        
+        .step {
+            flex: 1;
+            min-width: 250px;
+            text-align: center;
+            padding: 2rem;
+            position: relative;
+        }
+        
+        .step-number {
+            background-color: var(--primary);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.5rem;
+            margin: 0 auto 1.5rem;
+        }
+        
+        .step h3 {
+            margin-bottom: 1rem;
+        }
+        
+        /* Testimonials */
+        .testimonials {
+            padding: 6rem 5%;
+            background-color: white;
+        }
+        
+        .testimonial-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .testimonial-card {
+            background-color: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            border: 1px solid #eee;
+        }
+        
+        .testimonial-text {
+            font-style: italic;
+            margin-bottom: 1.5rem;
+            color: #555;
+        }
+        
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .author-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
+        .author-info h4 {
+            margin-bottom: 0.2rem;
+        }
+        
+        .author-info p {
+            color: #777;
+            font-size: 0.9rem;
+        }
+        
+        /* CTA Section */
+        .cta-section {
+            padding: 6rem 5%;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
             text-align: center;
         }
         
-        .wallet-balance-display h3 {
-            margin-bottom: 0.5rem;
+        .cta-section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
         }
         
-        .wallet-amount {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #FF9900;
+        .cta-section p {
+            max-width: 700px;
+            margin: 0 auto 2rem;
+            font-size: 1.1rem;
+            opacity: 0.9;
         }
         
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        /* Footer */
+        footer {
+            background-color: var(--dark);
+            color: white;
+            padding: 4rem 5% 2rem;
         }
         
-        /* Responsive adjustments */
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .footer-column h3 {
+            margin-bottom: 1.5rem;
+            font-size: 1.2rem;
+        }
+        
+        .footer-links {
+            list-style: none;
+        }
+        
+        .footer-links li {
+            margin-bottom: 0.8rem;
+        }
+        
+        .footer-links a {
+            color: #ccc;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .footer-links a:hover {
+            color: var(--primary);
+        }
+        
+        .social-links {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        .social-links a {
+            color: white;
+            background-color: rgba(255,255,255,0.1);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s;
+        }
+        
+        .social-links a:hover {
+            background-color: var(--primary);
+        }
+        
+        .copyright {
+            text-align: center;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+        
+        /* Responsive */
         @media (max-width: 768px) {
-            .payment-container {
-                padding: 1.5rem;
-                margin: 1rem;
+            .hero {
+                flex-direction: column;
+                text-align: center;
+                padding-top: 8rem;
             }
             
-            .card-elements {
-                grid-template-columns: 1fr;
+            .hero-content {
+                margin-bottom: 3rem;
+            }
+            
+            .app-buttons {
+                justify-content: center;
+            }
+            
+            .nav-links {
+                display: none;
             }
         }
     </style>
-    
 </head>
 <body>
-    
+    <!-- Header -->
+    <header>
+        <nav>
+            <div class="logo">
+                <img src="images/logo.png" alt="TaxiPata">
+                <span class="logo-text">TaxiPata</span>
+            </div>
+            <div class="nav-links">
+                
+                <a href="#features">Features</a>
+                <a href="#how-it-works">How It Works</a>
+                <a href="#testimonials">Testimonials</a>
+                <a href="#download">Download</a>
+            </div>
+            <a href="index.html" class="cta-button">Get Started</a>
+        </nav>
+    </header>
 
-    <main>
-        <div class="payment-container">
-            <div class="payment-header">
-                <h2>Complete Your Payment</h2>
-                <p>Choose your preferred payment method</p>
-            </div>
-            
-            <div class="wallet-balance-display">
-                <h3>Your Wallet Balance</h3>
-                <div class="wallet-amount">R<span id="wallet-balance-display">50.00</span></div>
-                <small>Fare: <span id="payment-fare">R25.00</span></small>
-            </div>
-            
-            <div class="payment-methods">
-                <div class="payment-method selected" id="wallet-method">
-                    <input type="radio" name="payment-method" value="wallet" checked>
-                    <div class="payment-icon">
-                        <i class="fas fa-wallet"></i>
-                    </div>
-                    <h3>TaxiPata Wallet</h3>
-                    <p>Pay using your wallet balance</p>
-                </div>
-                
-                <div class="payment-method" id="card-method">
-                    <input type="radio" name="payment-method" value="card">
-                    <div class="payment-icon">
-                        <i class="far fa-credit-card"></i>
-                    </div>
-                    <h3>Credit/Debit Card</h3>
-                    <p>Visa, Mastercard, Amex</p>
-                </div>
-                
-                <div class="payment-method" id="mobile-money-method">
-                    <input type="radio" name="payment-method" value="mobile-money">
-                    <div class="payment-icon">
-                        <i class="fas fa-mobile-alt"></i>
-                    </div>
-                    <h3>Mobile Money</h3>
-                    <p>Shop2shop, M-Pesa, Vodacom MPesa, MTN Mobile Money</p>
-                </div>
-            </div>
-            
-            <!-- Wallet Payment Details -->
-            <div class="payment-details active" id="wallet-details">
-                <div class="payment-summary">
-                    <p>You'll pay <strong>R25.00</strong> from your wallet balance</p>
-                    <p>Remaining balance: <strong>R25.00</strong></p>
-                </div>
-                <button class="pay-now-btn" id="pay-with-wallet">
-                    Confirm Payment
-                </button>
-            </div>
-            
-            <!-- Card Payment Details -->
-            <div class="payment-details" id="card-details">
-                <div class="form-group">
-                    <label for="card-number">Card Number</label>
-                    <input type="text" id="card-number" class="form-control" placeholder="1234 5678 9012 3456">
-                </div>
-                
-                <div class="form-group">
-                    <label for="card-name">Name on Card</label>
-                    <input type="text" id="card-name" class="form-control" placeholder="Your Name">
-                </div>
-                
-                <div class="card-elements">
-                    <div class="form-group">
-                        <label for="card-expiry">Expiry Date</label>
-                        <input type="text" id="card-expiry" class="form-control" placeholder="MM/YY">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="card-cvv">CVV</label>
-                        <input type="text" id="card-cvv" class="form-control" placeholder="123">
-                    </div>
-                </div>
-                
-                <button class="pay-now-btn" id="pay-with-card">
-                    Pay R25.00 Now
-                </button>
-            </div>
-            
-            <!-- Mobile Money Payment Details -->
-            <div class="payment-details" id="mobile-money-details">
-                <div class="form-group">
-                    <label for="mobile-provider">Mobile Provider</label>
-                    <select id="mobile-provider" class="form-control">
-                        <option value="">Select Provider</option>
-                        <option value="mpesa">M-Pesa</option>
-                        <option value="vodacom">Vodacom MPesa</option>
-                        <option value="mtn">MTN Mobile Money</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="mobile-number">Mobile Number</label>
-                    <input type="tel" id="mobile-number" class="form-control" placeholder="07XXXXXXXX">
-                </div>
-                
-                <div class="payment-instructions">
-                    <p>You'll receive a payment request on your mobile device to complete the transaction.</p>
-                </div>
-                
-                <button class="pay-now-btn" id="pay-with-mobile">
-                    Request Payment
-                </button>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Smart minibus taxi routes for South Africa</h1>
+            <p>Find routes, fares, and travel times for minibus taxis across SA. No more guessing or asking around at taxi ranks.</p>
+            <div class="app-buttons">
+                <a href="#" class="app-button">
+                    <i class="fab fa-apple"></i>
+                    <span>
+                        <small>Download on the</small>
+                        App Store
+                    </span>
+                </a>
+                <a href="#" class="app-button">
+                    <i class="fab fa-google-play"></i>
+                    <span>
+                        <small>Get it on</small>
+                        Google Play
+                    </span>
+                </a>
             </div>
         </div>
-    </main>
+        <div class="hero-image">
+            <div class="map-background"></div>
+            <img src="https://via.placeholder.com/300x600" alt="App Screenshot" class="phone-mockup">
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="section-title">
+            <h2>Why Choose TaxiPata</h2>
+            <p>The most reliable way to navigate South Africa's minibus taxi system</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-route"></i>
+                </div>
+                <h3>Accurate Routes</h3>
+                <p>Get precise minibus taxi routes for all major cities in South Africa with real-time updates.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-money-bill-wave"></i>
+                </div>
+                <h3>Fare Estimates</h3>
+                <p>Know exactly how much your trip will cost before you board the taxi.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <h3>Travel Times</h3>
+                <p>Plan your journey with accurate estimated travel times based on current conditions.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-map-marked-alt"></i>
+                </div>
+                <h3>Taxi Rank Locations</h3>
+                <p>Find the nearest taxi ranks with directions and operating hours.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-star"></i>
+                </div>
+                <h3>Driver Ratings</h3>
+                <p>See community ratings for drivers and taxi associations.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-wallet"></i>
+                </div>
+                <h3>Cashless Payments</h3>
+                <p>Pay for your rides securely through the app (coming soon).</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="how-it-works" id="how-it-works">
+        <div class="section-title">
+            <h2>How It Works</h2>
+            <p>Getting around with TaxiYa is simple and stress-free</p>
+        </div>
+        <div class="steps">
+            <div class="step">
+                <div class="step-number">1</div>
+                <h3>Enter Your Route</h3>
+                <p>Tell us where you're coming from and where you need to go.</p>
+            </div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <h3>Get Options</h3>
+                <p>We'll show you available taxi routes with fares and estimated times.</p>
+            </div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <h3>Ride With Confidence</h3>
+                <p>Board the right taxi knowing exactly where it's going and how much it costs.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="testimonials" id="testimonials">
+        <div class="section-title">
+            <h2>What Our Users Say</h2>
+            <p>Thousands of South Africans trust TaxiYa for their daily commutes</p>
+        </div>
+        <div class="testimonial-grid">
+            <div class="testimonial-card">
+                <p class="testimonial-text">"TaxiYa has saved me so much time and stress. I no longer have to ask around at the taxi rank - I know exactly which taxi to take to work every morning."</p>
+                <div class="testimonial-author">
+                    <img src="https://randomuser.me/api/portraits/women/32.jpg" alt="Thandi Nkosi" class="author-avatar">
+                    <div class="author-info">
+                        <h4>Thandi Nkosi</h4>
+                        <p>Johannesburg</p>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-card">
+                <p class="testimonial-text">"As a student, the fare estimates help me budget my transport costs. The app is accurate and easy to use."</p>
+                <div class="testimonial-author">
+                    <img src="https://randomuser.me/api/portraits/men/45.jpg" alt="Sipho Mbele" class="author-avatar">
+                    <div class="author-info">
+                        <h4>Sipho Mbele</h4>
+                        <p>Cape Town</p>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-card">
+                <p class="testimonial-text">"I use TaxiYa every day to get to work. The travel time estimates are spot on, so I'm never late anymore."</p>
+                <div class="testimonial-author">
+                    <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="Nomsa Dlamini" class="author-avatar">
+                    <div class="author-info">
+                        <h4>Nomsa Dlamini</h4>
+                        <p>Durban</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section" id="download">
+        <h2>Ready to Simplify Your Commute?</h2>
+        <p>Download TaxiYa today and experience stress-free minibus taxi travel across South Africa.</p>
+        <div class="app-buttons" style="justify-content: center;">
+            <a href="#" class="app-button">
+                <i class="fab fa-apple"></i>
+                <span>
+                    <small>Download on the</small>
+                    App Store
+                </span>
+            </a>
+            <a href="#" class="app-button">
+                <i class="fab fa-google-play"></i>
+                <span>
+                    <small>Get it on</small>
+                    Google Play
+                </span>
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-column">
+                <h3>TaxiPata</h3>
+                <p>Making minibus taxi travel simple, reliable and stress-free for all South Africans.</p>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                </div>
+            </div>
+            <div class="footer-column">
+                <h3>Company</h3>
+                <ul class="footer-links">
+                    <li><a href="#">About Us</a></li>
+                    <li><a href="#">Careers</a></li>
+                    <li><a href="#">Blog</a></li>
+                    <li><a href="#">Press</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h3>Support</h3>
+                <ul class="footer-links">
+                    <li><a href="#">Help Center</a></li>
+                    <li><a href="#">Contact Us</a></li>
+                    <li><a href="#">Privacy Policy</a></li>
+                    <li><a href="#">Terms of Service</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h3>Cities</h3>
+                <ul class="footer-links">
+                    <li><a href="#">Johannesburg</a></li>
+                    <li><a href="#">Cape Town</a></li>
+                    <li><a href="#">Durban</a></li>
+                    <li><a href="#">Pretoria</a></li>
+                    <li><a href="#">Port Elizabeth</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="copyright">
+            <p>&copy; 2025 TaxiPata. All rights reserved.</p>
+        </div>
+    </footer>
 
     <script>
-        // Payment method selection
-        document.addEventListener('DOMContentLoaded', function() {
-            const paymentMethods = document.querySelectorAll('.payment-method');
-            const paymentDetails = document.querySelectorAll('.payment-details');
-            
-            paymentMethods.forEach(method => {
-                method.addEventListener('click', function() {
-                    // Remove selected class from all methods
-                    paymentMethods.forEach(m => m.classList.remove('selected'));
-                    
-                    // Add selected class to clicked method
-                    this.classList.add('selected');
-                    
-                    // Hide all payment details
-                    paymentDetails.forEach(detail => detail.classList.remove('active'));
-                    
-                    // Show corresponding payment details
-                    const methodId = this.id;
-                    document.getElementById(`${methodId}-details`).classList.add('active');
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
                 });
             });
-            
-            // Payment button functionality
-            document.getElementById('pay-with-wallet').addEventListener('click', function() {
-                alert('Payment successful! R25.00 has been deducted from your wallet.');
-                // In a real app, you would process the payment here
-            });
-            
-            document.getElementById('pay-with-card').addEventListener('click', function() {
-                alert('Card payment processed successfully!');
-                // In a real app, you would process the card payment here
-            });
-            
-            document.getElementById('pay-with-mobile').addEventListener('click', function() {
-                alert('Payment request sent to your mobile device. Please complete the payment on your phone.');
-                // In a real app, you would initiate mobile payment here
-            });
-            
-            // Load the fare from URL parameters or previous page
-            const urlParams = new URLSearchParams(window.location.search);
-            const fare = urlParams.get('fare') || '25.00';
-            document.getElementById('payment-fare').textContent = `R${fare}`;
-            
-            // Calculate remaining balance
-            const walletBalance = 50.00; // This would come from your app state
-            const remainingBalance = walletBalance - parseFloat(fare);
-            document.querySelector('#wallet-details .payment-summary strong:last-child').textContent = `R${remainingBalance.toFixed(2)}`;
         });
+
+        // Mobile menu toggle would go here
     </script>
-    
-    <!-- Font Awesome for icons -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
-
-
-    <script src="script.js"></script>
 </body>
 </html>

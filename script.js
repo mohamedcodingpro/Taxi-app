@@ -429,3 +429,33 @@ document.addEventListener('DOMContentLoaded', initApp);
 // Global variables for map and markers
 let map;
 let userMarker;
+
+document.addEventListener('DOMContentLoaded', function() {
+    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+    
+    // Check for saved theme preference or use system preference
+    const currentTheme = localStorage.getItem('theme') || 
+                        (prefersDarkScheme.matches ? 'dark' : 'light');
+    
+    // Apply the theme
+    if (currentTheme === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      darkModeToggle.textContent = 'Light Mode';
+    }
+    
+    // Toggle between themes
+    darkModeToggle.addEventListener('click', function() {
+      let theme;
+      if (document.documentElement.getAttribute('data-theme') === 'dark') {
+        document.documentElement.removeAttribute('data-theme');
+        theme = 'light';
+        darkModeToggle.textContent = 'Dark Mode';
+      } else {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        theme = 'dark';
+        darkModeToggle.textContent = 'Light Mode';
+      }
+      localStorage.setItem('theme', theme);
+    });
+  });
